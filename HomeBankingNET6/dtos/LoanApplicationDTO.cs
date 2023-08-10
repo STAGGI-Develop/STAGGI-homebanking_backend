@@ -1,10 +1,10 @@
-﻿namespace HomeBankingNET6.dtos
+﻿namespace HomeBankingNET6.DTOs
 {
     public class LoanApplicationDTO
     {
         public long LoanId { get; set; }
         public double Amount { get; set; }
-        public string Payments { get; set; }
+        public int Payments { get; set; }
         public string ToAccountNumber { get; set; }
     }
 }

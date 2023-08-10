@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace HomeBankingNET6.dtos
+namespace HomeBankingNET6.DTOs
 {
     public class AccountDTO //Por ahora = a Account.cs (por modificar)...
     {

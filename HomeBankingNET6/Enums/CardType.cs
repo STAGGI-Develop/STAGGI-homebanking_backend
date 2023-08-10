@@ -1,4 +1,4 @@
-﻿namespace HomeBankingNET6.Models.Enums
+﻿namespace HomeBankingNET6.Enums
 {
     public enum CardType //Idem Transaction Type (reutilizar?)
     {
