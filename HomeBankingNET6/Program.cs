@@ -1,5 +1,6 @@
 using HomeBankingNET6.Controllers;
 using HomeBankingNET6.Data;
+using HomeBankingNET6.Helpers;
 using HomeBankingNET6.Repositories;
 using HomeBankingNET6.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -31,6 +32,7 @@ builder.Services.AddScoped<IClientLoanRepository, ClientLoanRepository>();
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
 builder.Services.AddScoped<ILoanRepository, LoanRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 
 //Services:
 builder.Services.AddHttpContextAccessor();
@@ -45,7 +47,7 @@ builder.Services.AddScoped<ILoanService, LoanService>();
 //Json:
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve );
 
-//Autenticación: Inventé con lo de Mindhub y la doc de Microsoft
+//AutenticaciÃ³n: InventÃ© con lo de Mindhub y la doc de Microsoft
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -54,7 +56,7 @@ builder.Services
         //options.LoginPath = new PathString("/index.html")
     });
 
-//Autorización: Inventé con lo de Mindhub y la doc de Microsoft
+//AutorizaciÃ³n: InventÃ© con lo de Mindhub y la doc de Microsoft
 builder.Services
     .AddAuthorization(options =>
     {

@@ -1,6 +1,13 @@
 ﻿using HomeBankingNET6.DTOs;
 using HomeBankingNET6.Services;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+using HomeBankingNET6.Models;
+using System.Linq;
+using System;
+using Microsoft.Extensions.Logging.Abstractions;
+using HomeBankingNET6.Helpers;
+
 
 namespace HomeBankingNET6.Controllers
 {
@@ -9,9 +16,11 @@ namespace HomeBankingNET6.Controllers
     public class ClientsController : ControllerBase
     {
         private readonly IClientService _clientService;
-        public ClientsController(IClientService clientService)
+        private readonly IPasswordHasher _passwordHasher;
+        public ClientsController(IClientService clientService, , IPasswordHasher passwordHasher)
         {
             _clientService = clientService;
+            _passwordHasher = passwordHasher;
         }
 
         [HttpGet]
@@ -38,6 +47,16 @@ namespace HomeBankingNET6.Controllers
             if (createdClientDTO == null)
                 return StatusCode(403, "No se pudo crear el cliente.");
 
+             //var passwordHashed = _passwordHasher.Hash(client.Password);
+             /*
+             Client newClient = new Client
+                {
+                    Email = client.Email,
+                    Password = passwordHashed,
+                    FirstName = client.FirstName,
+                    LastName = client.LastName
+                };
+             */
             return Created("Cliente creado", createdClientDTO);
         }
 
