@@ -16,11 +16,9 @@ namespace HomeBankingNET6.Controllers
     public class ClientsController : ControllerBase
     {
         private readonly IClientService _clientService;
-        private readonly IPasswordHasher _passwordHasher;
-        public ClientsController(IClientService clientService, , IPasswordHasher passwordHasher)
+        public ClientsController(IClientService clientService)
         {
             _clientService = clientService;
-            _passwordHasher = passwordHasher;
         }
 
         [HttpGet]
@@ -47,16 +45,6 @@ namespace HomeBankingNET6.Controllers
             if (createdClientDTO == null)
                 return StatusCode(403, "No se pudo crear el cliente.");
 
-             //var passwordHashed = _passwordHasher.Hash(client.Password);
-             /*
-             Client newClient = new Client
-                {
-                    Email = client.Email,
-                    Password = passwordHashed,
-                    FirstName = client.FirstName,
-                    LastName = client.LastName
-                };
-             */
             return Created("Cliente creado", createdClientDTO);
         }
 

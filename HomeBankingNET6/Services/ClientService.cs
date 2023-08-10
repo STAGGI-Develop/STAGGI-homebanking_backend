@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System;
 using System.Linq;
 using static HomeBankingNET6.Services.ServiceExceptions;
+using HomeBankingNET6.Helpers;
 
 namespace HomeBankingNET6.Services
 {
@@ -13,12 +14,14 @@ namespace HomeBankingNET6.Services
         private readonly IClientRepository _clientRepository;
         private readonly IAccountRepository _accountRepository;
         private readonly IAuthService _authService;
+        private readonly IPasswordHasher _passwordHasher;
 
-        public ClientService(IClientRepository clientRepository, IAccountRepository accountRepository, IAuthService authService)
+        public ClientService(IClientRepository clientRepository, IAccountRepository accountRepository, IAuthService authService, IPasswordHasher passwordHasher)
         {
             _clientRepository = clientRepository;
             _accountRepository = accountRepository;
             _authService = authService;
+            _passwordHasher = passwordHasher;
         }
 
         public List<ClientDTO> GetAllClients()
@@ -121,10 +124,11 @@ namespace HomeBankingNET6.Services
                 if (_clientRepository.FindByEmail(client.Email) != null)
                     throw new EmailAlreadyUsed();
 
+                string passwordHashed = _passwordHasher.Hash(client.Password);
                 Client newClient = new Client
                 {
                     Email = client.Email,
-                    Password = client.Password,
+                    Password = passwordHashed,
                     FirstName = client.FirstName,
                     LastName = client.LastName,
                 };
