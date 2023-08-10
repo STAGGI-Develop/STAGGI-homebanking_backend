@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\build\HomeBankingNET6.props" />
-</Project>
