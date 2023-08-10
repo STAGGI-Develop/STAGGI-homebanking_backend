@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using HomeBankingNET6.Models;
 using HomeBankingNET6.dtos;
+using HomeBankingNET6.Helpers;
 
 namespace HomeBankingNET6.Controllers
 {
@@ -13,9 +14,11 @@ namespace HomeBankingNET6.Controllers
     public class AuthController : ControllerBase
     {
         private IClientRepository _clientRepository;
-        public AuthController(IClientRepository clientRepository)
+        private readonly IPasswordHasher _passwordHasher;
+        public AuthController(IClientRepository clientRepository, IPasswordHasher passwordHasher)
         {
             _clientRepository = clientRepository;
+            _passwordHasher = passwordHasher;
         }
 
         [HttpPost("login")]
@@ -24,7 +27,9 @@ namespace HomeBankingNET6.Controllers
             try
             { 
                 Client user = _clientRepository.FindByEmail(clientAuthDTO.Email);
-                if (user == null || !String.Equals(user.Password, clientAuthDTO.Password))
+                bool result = _passwordHasher.Verify(user.Password, clientAuthDTO.Password);
+
+                if (user == null || !result)
                 {
                     return Unauthorized();
                 }

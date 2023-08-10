@@ -1,5 +1,5 @@
 using HomeBankingNET6.Data;
-using HomeBankingNET6.Models;
+using HomeBankingNET6.Helpers;
 using HomeBankingNET6.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +26,7 @@ builder.Services.AddScoped<IClientLoanRepository, ClientLoanRepository>();
 builder.Services.AddScoped<IClientRepository, ClientRepository>();
 builder.Services.AddScoped<ILoanRepository, LoanRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 
 //Json:
 builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve );

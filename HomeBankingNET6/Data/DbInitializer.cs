@@ -1,19 +1,21 @@
 ﻿using System;
 using System.Linq;
 using HomeBankingNET6.Models.Enums;
-using HomeBankingNET6.Data;
-
-namespace HomeBankingNET6.Models
+using HomeBankingNET6.Models;
+using HomeBankingNET6.Helpers;
+namespace HomeBankingNET6.Data
 {
     public class DbInitializer
     {
-        public static void Initialize(HomeBankingContext context) 
+        public static void Initialize(HomeBankingContext context)
         {
             //Carga de datos de prueba en nuestra entidad Clients
             //#################################################################################################
             //Consultar si tenemos datos (d prueba).
-            if (!context.Clients.Any()) 
-            { 
+            if (!context.Clients.Any())
+            {
+                var passwordHasher = new PasswordHasher();
+
                 //Creamos datos de prueba
                 var clients = new Client[]
                 {
@@ -21,23 +23,23 @@ namespace HomeBankingNET6.Models
                     FirstName = "Victor",
                     LastName = "Coronado",
                     Email = "vcoronado@gmail.com",
-                    Password = "123456",
+                    Password = passwordHasher.Hash("123456"),
                     },
                     new Client{
                     FirstName = "Ignacio",
                     LastName = "Di Bella",
                     Email = "ignacio.dibella.n@gmail.com",
-                    Password = "123456",
+                    Password = passwordHasher.Hash("123456"),
                     },
                 };
 
-                foreach (var client in clients) 
+                foreach (var client in clients)
                 {
                     context.Clients.Add(client);
                     context.SaveChanges();
                 }
 
-                
+
             }
             //En caso de existir datos no hacemos nada.
 
@@ -61,12 +63,12 @@ namespace HomeBankingNET6.Models
                         new Account
                         {
                             Number = "VIN001",
-                            CreationDate = System.DateTime.Now,
+                            CreationDate = DateTime.Now,
                             Balance = -1000,
                             ClientId = clientVictor.Id
                         }
                     };
-                    foreach (var account in accountsVictor) 
+                    foreach (var account in accountsVictor)
                     {
                         context.Accounts.Add(account);
                     }
@@ -74,19 +76,19 @@ namespace HomeBankingNET6.Models
                 }
 
                 var clientIgnacio = context.Clients.FirstOrDefault(c => c.Email == "ignacio.dibella.n@gmail.com");
-                if (clientIgnacio != null) 
+                if (clientIgnacio != null)
                 {
                     var accountsIgnacio = new Account[]
                     {
                         new Account{
-                            Number = "CC01", 
-                            CreationDate= System.DateTime.Now,
-                            Balance = 50000, 
+                            Number = "CC01",
+                            CreationDate= DateTime.Now,
+                            Balance = 50000,
                             ClientId = clientIgnacio.Id
                         },
                         new Account{
                             Number = "CC02",
-                            CreationDate=System.DateTime.Now,
+                            CreationDate=DateTime.Now,
                             Balance=1000000,
                             ClientId = clientIgnacio.Id
                         }
@@ -105,14 +107,14 @@ namespace HomeBankingNET6.Models
             {
                 var account1 = context.Accounts.FirstOrDefault(ac => ac.Number == "VIN001");
 
-                if (account1 != null) 
+                if (account1 != null)
                 {
                     var transactions1 = new Transaction[]
                     {
                         new Transaction{
                             AccountId = account1.Id,
                             Amount = -2000,
-                            Date = System.DateTime.Now.AddHours(-6),
+                            Date = DateTime.Now.AddHours(-6),
                             Description = "Compra Nakaoutdoors",
                             Type = TransactionType.DEBIT.ToString()
                         },
@@ -120,7 +122,7 @@ namespace HomeBankingNET6.Models
                         {
                             AccountId = account1.Id,
                             Amount = 10000,
-                            Date =  System.DateTime.Now.AddHours(-7),
+                            Date =  DateTime.Now.AddHours(-7),
                             Description = "Transferencia Recibida",
                             Type = TransactionType.CREDIT.ToString()
 
@@ -129,14 +131,14 @@ namespace HomeBankingNET6.Models
                         {
                             AccountId = account1.Id,
                             Amount = -500,
-                            Date = System.DateTime.Now.AddHours(-8),
+                            Date = DateTime.Now.AddHours(-8),
                             Description = "Compra en tiendaMia",
                             Type = TransactionType.DEBIT.ToString()
                         }
                     };
 
                     foreach (Transaction transaction in transactions1)
-                    { 
+                    {
                         context.Transactions.Add(transaction);
                     }
                     context.SaveChanges();
@@ -150,7 +152,7 @@ namespace HomeBankingNET6.Models
                         new Transaction{
                             AccountId = account2.Id,
                             Amount = 5000,
-                            Date = System.DateTime.Now.AddHours(-4),
+                            Date = DateTime.Now.AddHours(-4),
                             Description = "Transferencia Recibida",
                             Type = TransactionType.CREDIT.ToString()
                         },
@@ -158,16 +160,16 @@ namespace HomeBankingNET6.Models
                         {
                             AccountId = account2.Id,
                             Amount = 100000,
-                            Date =  System.DateTime.Now.AddHours(-5),
+                            Date =  DateTime.Now.AddHours(-5),
                             Description = "Plazo Fijo Liquidado",
                             Type = TransactionType.CREDIT.ToString()
 
                         },
                     };
 
-                    foreach (Transaction transaction in transactions2) 
+                    foreach (Transaction transaction in transactions2)
                     {
-                        context.Transactions.Add (transaction);
+                        context.Transactions.Add(transaction);
                     }
                     context.SaveChanges();
                 }
@@ -196,9 +198,9 @@ namespace HomeBankingNET6.Models
                         }
                     };
 
-                foreach (Loan loan in loans) 
+                foreach (Loan loan in loans)
                 {
-                    context.Loans.Add (loan);
+                    context.Loans.Add(loan);
                 }
                 context.SaveChanges();
 
@@ -255,7 +257,7 @@ namespace HomeBankingNET6.Models
             if (!context.Cards.Any())
             {
                 var client1 = context.Clients.FirstOrDefault(c => c.Email == "vcoronado@gmail.com");
-                if(client1 != null)
+                if (client1 != null)
                 {
                     var cards = new Card[]
                     {
@@ -269,7 +271,7 @@ namespace HomeBankingNET6.Models
                            FromDate = DateTime.Now,
                            ThruDate = DateTime.Now.AddYears(4),
                        },
-                        new Card{ 
+                        new Card{
                             ClientId = client1.Id,
                             CardHolder = client1.FirstName + " " + client1.LastName,
                             Type = CardType.CREDIT.ToString(),
@@ -282,7 +284,7 @@ namespace HomeBankingNET6.Models
                     };
 
                     foreach (Card card in cards)
-                    { 
+                    {
                         context.Cards.Add(card);
                     }
                     context.SaveChanges();
