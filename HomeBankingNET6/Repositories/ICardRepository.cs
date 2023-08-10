@@ -8,6 +8,7 @@ namespace HomeBankingNET6.Repositories
     {
         void Save(Card card);
         Card FindById(long id);
+        Card FindByNumber(string number);
         IEnumerable<Card> GetCardsByClient(long clientId);
     }
 }

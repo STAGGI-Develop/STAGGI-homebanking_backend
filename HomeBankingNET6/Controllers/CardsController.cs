@@ -1,11 +1,7 @@
-﻿
-using HomeBankingNET6.Models;
-using HomeBankingNET6.Models.Enums;
-using HomeBankingNET6.Repositories;
-using Microsoft.AspNetCore.Http;
+﻿using HomeBankingNET6.DTOs;
+using HomeBankingNET6.Services;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Linq;
+using System.Collections.Generic;
 
 namespace HomeBankingNET6.Controllers
 {
@@ -13,82 +9,30 @@ namespace HomeBankingNET6.Controllers
     [ApiController]
     public class CardsController : ControllerBase
     {
-        private ICardRepository _cardRepository;
-        private IClientRepository _clientRepository;
-
-        public CardsController(ICardRepository cardRepository, IClientRepository clientRepository)
+        private readonly ICardService _cardService;
+        public CardsController(ICardService cardService)
         {
-            _cardRepository = cardRepository;
-            _clientRepository = clientRepository;
+            _cardService = cardService;
         }
 
         [HttpPost("clients/current/cards")]
-        public IActionResult CreateCurrentCard([FromBody] Card card) //Crea y asinga una tarjeta al usuario logueado en la sesión actual.
+        public IActionResult CreateCardToCurrent([FromBody] CreateCardRequestDTO cardRequest)
         {
-            try
-            {
-                string email = User.FindFirst("Client") != null ? User.FindFirst("Client").Value : string.Empty;
-                if (email == string.Empty)
-                {
-                    return Forbid();
-                }
+            CardDTO newCardDTO = _cardService.CreateCardForCurrentClient(cardRequest.Type, cardRequest.Color);
+            if (newCardDTO == null)
+                return Unauthorized();
 
-                Client currentClient = _clientRepository.FindByEmail(email);
-                if (currentClient == null)
-                {
-                    return Forbid();
-                }
-
-                int numberOfCards = currentClient.Cards.Where(c => c.Type == card.Type).Count();
-                if (numberOfCards >= 3)
-                {
-                    return StatusCode(403, $"El cliente alcanzó la máxima cantidad de tarjetas {card.Type}");
-                }
-
-                Card newCard = new Card
-                {
-                    //Card Number y Cvv se generan aleatoriamente desde el constructor.
-                    ClientId = currentClient.Id,
-                    CardHolder = $"{currentClient.FirstName} {currentClient.LastName}",
-                    Type = card.Type.ToString(),
-                    Color = card.Color.ToString(),
-                    FromDate = DateTime.Now,
-                    ThruDate = DateTime.Now.AddYears(4),
-                };
-                _cardRepository.Save(newCard);
-
-                return Created("Tarjeta creada exitosamente", newCard);
-
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            return Created("Tarjeta creada", newCardDTO);
         }
 
         [HttpGet("clients/current/cards")]
         public IActionResult GetCurrentCards()
         {
-            try
-            {
-                string email = User.FindFirst("Client") != null ? User.FindFirst("Client").Value : string.Empty;
-                if (email == string.Empty)
-                {
-                    return Forbid();
-                }
-                Client currentClient = _clientRepository.FindByEmail(email);
-                if (currentClient == null)
-                {
-                    return Forbid();
-                }
+            List<CardDTO> clientCards = _cardService.GetCurrentClientCards();
+            if (clientCards == null)
+                return Unauthorized();
 
-                var userCards = _cardRepository.GetCardsByClient(currentClient.Id);
-                return Ok(userCards);
-            }
-            catch (Exception ex) 
-            {
-                return StatusCode(500, ex.Message);
-            }
+            return Ok(clientCards);
         }
 
     }

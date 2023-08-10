@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Linq;
-using HomeBankingNET6.Models.Enums;
-using HomeBankingNET6.Models;
 using HomeBankingNET6.Helpers;
+using HomeBankingNET6.Models;
+using HomeBankingNET6.Enums;
+
 namespace HomeBankingNET6.Data
 {
     public class DbInitializer
@@ -14,6 +15,7 @@ namespace HomeBankingNET6.Data
             //Consultar si tenemos datos (d prueba).
             if (!context.Clients.Any())
             {
+
                 var passwordHasher = new PasswordHasher();
 
                 //Creamos datos de prueba
@@ -24,6 +26,7 @@ namespace HomeBankingNET6.Data
                     LastName = "Coronado",
                     Email = "vcoronado@gmail.com",
                     Password = passwordHasher.Hash("123456"),
+
                     },
                     new Client{
                     FirstName = "Ignacio",

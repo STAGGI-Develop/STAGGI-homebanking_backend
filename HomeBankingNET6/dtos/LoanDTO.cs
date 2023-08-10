@@ -1,6 +1,6 @@
 ﻿using System.Net.Sockets;
 
-namespace HomeBankingNET6.dtos
+namespace HomeBankingNET6.DTOs
 {
     public class LoanDTO
     {

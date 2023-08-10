@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace HomeBankingNET6.dtos
+namespace HomeBankingNET6.DTOs
 {
     public class CardDTO
     {

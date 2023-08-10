@@ -1,11 +1,13 @@
 ﻿using HomeBankingNET6.Repositories;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using HomeBankingNET6.Models;
-using HomeBankingNET6.dtos;
 using HomeBankingNET6.Helpers;
+﻿using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
+using HomeBankingNET6.DTOs;
+using HomeBankingNET6.Services;
 
 namespace HomeBankingNET6.Controllers
 {
@@ -13,62 +15,31 @@ namespace HomeBankingNET6.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private IClientRepository _clientRepository;
+        private readonly IAuthService _authService;
         private readonly IPasswordHasher _passwordHasher;
-        public AuthController(IClientRepository clientRepository, IPasswordHasher passwordHasher)
+        public AuthController(IAuthService authService,  IPasswordHasher passwordHasher)
         {
-            _clientRepository = clientRepository;
+            _authService = authService;
             _passwordHasher = passwordHasher;
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] ClientAuthDTO clientAuthDTO)
+        public async Task<IActionResult> Login([FromBody] ClientAuthDTO loginRequest)
         {
-            try
-            { 
-                Client user = _clientRepository.FindByEmail(clientAuthDTO.Email);
-                bool result = _passwordHasher.Verify(user.Password, clientAuthDTO.Password);
+        // bool result = _passwordHasher.Verify(user.Password, clientAuthDTO.Password);
 
-                if (user == null || !result)
-                {
-                    return Unauthorized();
-                }
-                
-                var claims = new List<Claim>
-                {
-                    new Claim("Client", user.Email)
-                };
-
-                var claimsIdentity = new ClaimsIdentity(
-                    claims, CookieAuthenticationDefaults.AuthenticationScheme
-                    );
-
-                await HttpContext.SignInAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme,
-                    new ClaimsPrincipal(claimsIdentity));
-
+            bool isAuthenticated = await _authService.Login(loginRequest.Email, loginRequest.Password);
+            if (isAuthenticated)
                 return Ok();
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, ex.Message);
-            }
+            else
+                return Unauthorized();
         }
 
         [HttpPost("logout")]
         public async Task<IActionResult> Logout()
         {
-            try
-            { 
-                await HttpContext.SignOutAsync(
-                    CookieAuthenticationDefaults.AuthenticationScheme);
-
-                return Ok();
-            }
-            catch (Exception ex) 
-            {
-                return StatusCode(500, ex.Message);
-            }
+            await _authService.Logout();
+            return Ok();
         }
 
     }

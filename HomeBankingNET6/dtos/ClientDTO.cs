@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace HomeBankingNET6.dtos
+namespace HomeBankingNET6.DTOs
 {
     public class ClientDTO
     {
