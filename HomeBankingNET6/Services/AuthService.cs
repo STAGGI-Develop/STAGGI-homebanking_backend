@@ -1,4 +1,6 @@
-﻿using HomeBankingNET6.Models;
+﻿using HomeBankingNET6.DTOs;
+using HomeBankingNET6.Helpers;
+using HomeBankingNET6.Models;
 using HomeBankingNET6.Repositories;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -13,17 +15,19 @@ namespace HomeBankingNET6.Services
     {
         private readonly IClientRepository _clientRepository;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IPasswordHasher _passwordHasher;
 
-        public AuthService(IClientRepository clientRepository, IHttpContextAccessor httpContextAccessor)
+        public AuthService(IClientRepository clientRepository, IHttpContextAccessor httpContextAccessor, IPasswordHasher passwordHasher)
         {
             _clientRepository = clientRepository;
             _httpContextAccessor = httpContextAccessor;
+            _passwordHasher = passwordHasher;
         }
 
         public async Task<bool> Login(string email, string password)
         {
             Client user = _clientRepository.FindByEmail(email);
-            if (user == null || user.Password != password)
+            if (!_passwordHasher.Verify(user.Password, password))
                 return false;
 
             var claims = new List<Claim>
