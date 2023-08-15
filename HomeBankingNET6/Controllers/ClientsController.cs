@@ -41,11 +41,13 @@ namespace HomeBankingNET6.Controllers
         [HttpPost]
         public IActionResult Post([FromBody] CreateClientRequestDTO newClient)
         {
-            ClientDTO createdClientDTO = _clientService.CreateClient(newClient);
-            if (createdClientDTO == null)
-                return StatusCode(403, "No se pudo crear el cliente.");
+            var result = _clientService.CreateClient(newClient);
+            if (!result.IsSuccess)
+            {
+                return StatusCode(result.Error.Status, result.Error);
+            }
 
-            return Created("Cliente creado", createdClientDTO);
+            return StatusCode(201, result.Ok);
         }
 
         [HttpGet("current")]

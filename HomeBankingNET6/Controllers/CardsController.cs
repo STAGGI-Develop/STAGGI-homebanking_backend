@@ -18,11 +18,14 @@ namespace HomeBankingNET6.Controllers
         [HttpPost("clients/current/cards")]
         public IActionResult CreateCardToCurrent([FromBody] CreateCardRequestDTO cardRequest)
         {
-            CardDTO newCardDTO = _cardService.CreateCardForCurrentClient(cardRequest.Type, cardRequest.Color);
-            if (newCardDTO == null)
-                return Unauthorized();
+            var result = _cardService.CreateCardForCurrentClient(cardRequest.Type, cardRequest.Color);
 
-            return Created("Tarjeta creada", newCardDTO);
+            if (!result.IsSuccess)
+            {
+                return StatusCode(result.Error.Status, result.Error);
+            }
+
+            return StatusCode(201, result.Ok);
         }
 
         [HttpGet("clients/current/cards")]
