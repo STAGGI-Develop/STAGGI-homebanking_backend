@@ -27,7 +27,7 @@ namespace HomeBankingNET6.Services
         public async Task<bool> Login(string email, string password)
         {
             Client user = _clientRepository.FindByEmail(email);
-            if (!_passwordHasher.Verify(user.Password, password))
+            if (!_passwordHasher.Verify(user?.Password, password))
                 return false;
 
             var claims = new List<Claim>
@@ -50,7 +50,11 @@ namespace HomeBankingNET6.Services
         }
         public string UserAuthenticated()
         {
-            return _httpContextAccessor.HttpContext.User.FindFirst("Client")?.Value;
+            //return _httpContextAccessor.HttpContext.User.FindFirst("Client")?.Value;
+            string userEmail = _httpContextAccessor.HttpContext.User.FindFirst("Client")?.Value;
+            if (userEmail == null || _clientRepository.FindByEmail(userEmail) == null) return null;
+
+            return userEmail;
         }
     }
 }

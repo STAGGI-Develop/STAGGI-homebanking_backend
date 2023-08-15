@@ -22,25 +22,45 @@ namespace HomeBankingNET6.Services
             _authService = authService;
         }
 
-        public CardDTO CreateCardForCurrentClient(string cardType, string cardColor)
+        public Result<CardDTO> CreateCardForCurrentClient(string cardType, string cardColor)
         {
-            string UserAuthenticatedEmail = _authService.UserAuthenticated();
-            if (UserAuthenticatedEmail == null) return null;
+            string userAuthenticatedEmail = _authService.UserAuthenticated();
+            if (userAuthenticatedEmail == null) return Result<CardDTO>.Unauthorized();
 
-            Client currentClient = _clientRepository.FindByEmail(UserAuthenticatedEmail);
-            if (currentClient == null) throw new Exception("Cliente no encontrado");
+            Client currentClient = _clientRepository.FindByEmail(userAuthenticatedEmail);
 
             CardType parsedCardType;
             if (!Enum.TryParse(cardType, out parsedCardType))
-                throw new Exception($"El tipo de tarjeta {cardType} no es válido");
+            {
+                return Result<CardDTO>.Failure(new ErrorResponseDTO
+                {
+                    Status = 403,
+                    Error = "Forbidden",
+                    Message = $"El tipo de tarjeta {cardType} no es válido"
+                });
+            }
 
             CardColor parsedCardColor;
             if (!Enum.TryParse(cardColor, out parsedCardColor))
-                throw new Exception($"El color de tarjeta {cardColor} no es válido");
+            {
+                return Result<CardDTO>.Failure(new ErrorResponseDTO
+                {
+                    Status = 403,
+                    Error = "Forbidden",
+                    Message = $"El color de tarjeta {cardColor} no es válido"
+                });
+            }
 
-            int numberOfCards = currentClient.Cards.Count(c => c.Type == parsedCardType.ToString());
+            int numberOfCards = currentClient.Cards.Count(c => c.Type == cardType);
             if (numberOfCards >= 3)
-                throw new Exception($"El cliente tiene 3 tarjetas de tipo {parsedCardType}, no es posible crear otra");
+            {
+                return Result<CardDTO>.Failure(new ErrorResponseDTO
+                {
+                    Status = 403,
+                    Error = "Forbidden",
+                    Message = $"El cliente alcanzó el número máximo de tarjetas {parsedCardType}"
+                });
+            }
 
             (string number, int cvv) cardData = CardDataGeneratorHelper.Generate();
             ///pending check existing card numbers
@@ -68,7 +88,7 @@ namespace HomeBankingNET6.Services
                 FromDate = newCard.FromDate,
                 ThruDate = newCard.ThruDate,
             };
-            return newCardDTO;
+            return Result < CardDTO >.Success(newCardDTO);
         }
         public List<CardDTO> GetCurrentClientCards()
         {

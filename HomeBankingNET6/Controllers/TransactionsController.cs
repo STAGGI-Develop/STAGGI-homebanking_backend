@@ -18,11 +18,14 @@ namespace HomeBankingNET6.Controllers
         [HttpPost]
         public IActionResult Post([FromBody] TransferDTO transferDTO)
         {
-            AccountDTO fromAccountsDTO = _transactionService.ProcessTransaction(transferDTO);
-            if (fromAccountsDTO == null)
-                return Unauthorized();
+            var result = _transactionService.ProcessTransaction(transferDTO);
 
-            return Created("Transacción exitosa", fromAccountsDTO);
+            if (!result.IsSuccess)
+            {
+                return StatusCode(result.Error.Status, result.Error);
+            }
+
+            return StatusCode(201, result.Ok);
         }
     }
 }

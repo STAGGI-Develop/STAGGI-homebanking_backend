@@ -35,11 +35,14 @@ namespace HomeBankingNET6.Controllers
         [HttpPost("clients/current/accounts")]
         public IActionResult CreateAccountToCurrent()
         {
-            AccountDTO newAccountDTO = _accountService.CreateAccountForCurrentClient();
-            if (newAccountDTO == null)
-                return Unauthorized();
+            var result = _accountService.CreateAccountForCurrentClient();
 
-            return Created("Cuenta creada", newAccountDTO);
+            if (!result.IsSuccess)
+            {
+                return StatusCode(result.Error.Status, result.Error);
+            }
+
+            return StatusCode(201, result.Ok);
         }
 
         [HttpGet("clients/current/accounts")]

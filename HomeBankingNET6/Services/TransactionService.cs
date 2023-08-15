@@ -1,5 +1,6 @@
 ﻿using HomeBankingNET6.DTOs;
 using HomeBankingNET6.Enums;
+using HomeBankingNET6.Helpers;
 using HomeBankingNET6.Models;
 using HomeBankingNET6.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -24,46 +25,66 @@ namespace HomeBankingNET6.Services
             _accountService = accountService;
         }
 
-        public AccountDTO ProcessTransaction(TransferDTO transferDTO)
+        public Result<AccountDTO> ProcessTransaction(TransferDTO transferDTO)
         {
-            string UserAuthenticatedEmail = _authService.UserAuthenticated();
-            if (UserAuthenticatedEmail == null) return null;
+            #region Validations
+            string userAuthenticatedEmail = _authService.UserAuthenticated();
+            if (userAuthenticatedEmail == null) return Result<AccountDTO>.Unauthorized();
 
-            Client currentClient = _clientRepository.FindByEmail(UserAuthenticatedEmail);
-            if (currentClient == null) throw new Exception("Cliente no encontrado");
+            string errorMessage = null;
 
-            if (transferDTO.FromAccountNumber == string.Empty || transferDTO.ToAccountNumber == string.Empty)
-                throw new Exception("Cuenta de origen o cuenta de destino no proporcionada.");
+            if (errorMessage == null && transferDTO.FromAccountNumber == string.Empty || transferDTO.ToAccountNumber == string.Empty)
+                errorMessage = "Cuenta de origen o cuenta de destino no proporcionada.";
 
-            if (transferDTO.FromAccountNumber == transferDTO.ToAccountNumber)
-                throw new Exception("No se permite la transferencia a la misma cuenta.");
+            if (errorMessage == null && transferDTO.FromAccountNumber == transferDTO.ToAccountNumber)
+                errorMessage = "No se permite la transferencia a la misma cuenta.";
 
-            if (transferDTO.Amount == 0 || transferDTO.Description == string.Empty)
-                throw new Exception("Monto o descripción no proporcionados.");
+            if (errorMessage == null && transferDTO.Amount == 0 || transferDTO.Description == string.Empty)
+                errorMessage = "Monto o descripción no proporcionados.";
 
-            //buscamos las cuentas
+            if (errorMessage != null)
+            {
+                return Result<AccountDTO>.Failure(new ErrorResponseDTO
+                {
+                    Status = 403,
+                    Error = "Forbidden",
+                    Message = errorMessage
+                });
+            }
+
             Account fromAccount = _accountRepository.FindByNumber(transferDTO.FromAccountNumber);
-            if (fromAccount == null)
-                throw new Exception("Cuenta de origen no existe");
 
-            //controlamos el monto
-            if (fromAccount.Balance < transferDTO.Amount)
-                throw new Exception("Fondos insuficientes");
+            if (errorMessage == null && fromAccount == null)
+            { 
+                errorMessage = "Cuenta de origen no existe";
+            }
+            if (errorMessage == null && fromAccount != null)
+            {
+                Client currentClient = _clientRepository.FindById(fromAccount.ClientId);
+                if (currentClient.Email != userAuthenticatedEmail)
+                    errorMessage = "Cuenta de origen no pertenece al usuario autenticado";
+            }
+            if (errorMessage == null && fromAccount?.Balance < transferDTO.Amount) errorMessage = "Fondos insuficientes";
 
-            //buscamos la cuenta de destino
             Account toAccount = _accountRepository.FindByNumber(transferDTO.ToAccountNumber);
-            if (toAccount == null)
-                throw new Exception("Cuenta de destino no existe");
+            if (errorMessage == null && toAccount == null) errorMessage = "Cuenta de destino no existe";
 
-            //a la cuenta de origen le restamos el monto
-            //a la cuenta de destino le sumamos el monto
+            if (errorMessage != null)
+            {
+                return Result<AccountDTO>.Failure(new ErrorResponseDTO
+                {
+                    Status = 403,
+                    Error = "Forbidden",
+                    Message = errorMessage
+                });
+            }
+            #endregion
+
             fromAccount.Balance = fromAccount.Balance - transferDTO.Amount;
             toAccount.Balance = toAccount.Balance + transferDTO.Amount;
             _accountRepository.Save(fromAccount);
             _accountRepository.Save(toAccount);
 
-            //demas logica para guardado
-            //comenzamos con la inserción de las 2 transacciones realizadas
             _transactionRepository.Save(new Transaction
             {
                 Type = TransactionType.DEBIT.ToString(),
@@ -83,7 +104,7 @@ namespace HomeBankingNET6.Services
             });
 
             AccountDTO fromAccountDTO = _accountService.GetAccountById(fromAccount.Id);
-            return fromAccountDTO;
+            return Result<AccountDTO>.Success(fromAccountDTO);
         }
     }
 }

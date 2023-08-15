@@ -1,4 +1,5 @@
 ﻿using HomeBankingNET6.DTOs;
+using HomeBankingNET6.Helpers;
 using HomeBankingNET6.Models;
 using HomeBankingNET6.Repositories;
 using System;
@@ -69,18 +70,36 @@ namespace HomeBankingNET6.Services
             return accountDTO;
         }
         //[DebuggerNonUserCode]
-        public AccountDTO CreateAccountForCurrentClient()
+        public Result<AccountDTO> CreateAccountForCurrentClient()
         {
-            string UserAuthenticatedEmail = _authService.UserAuthenticated();
-            if (UserAuthenticatedEmail == null) return null;
-            //null representa que no hay un usuario autenticado
+            string userAuthenticatedEmail = _authService.UserAuthenticated();
+            if (userAuthenticatedEmail == null)
+            {
+                return Result<AccountDTO>.Unauthorized();
+            }
 
-            Client currentClient = _clientRepository.FindByEmail(UserAuthenticatedEmail);
-            if (currentClient == null) throw new ClientNotFoundException();
-            if (currentClient.Accounts.Count >= 3) throw new MaxAccountsException();
+            Client currentClient = _clientRepository.FindByEmail(userAuthenticatedEmail);
+            if (currentClient == null)
+            {
+                return Result<AccountDTO>.Failure(new ErrorResponseDTO
+                {
+                    Status = 404,
+                    Error = "Not Found",
+                    Message = "No se encontró el cliente"
+                });
+            }
+
+            if (currentClient.Accounts.Count >= 3)
+            {
+                return Result<AccountDTO>.Failure(new ErrorResponseDTO
+                {
+                    Status = 400,
+                    Error = "Bad Request",
+                    Message = "El cliente alcanzó el máximo de cuentas"
+                });
+            }
 
             ///pending check existing accounts number
-            
             Random random = new Random();
             string randomAccountNumber = $"VIN-{random.Next(100000, 1000000)}";
 
@@ -100,7 +119,7 @@ namespace HomeBankingNET6.Services
                 Balance = newAccount.Balance,
             };
 
-            return accountDTO;
+            return Result<AccountDTO>.Success(accountDTO);
         }
         public List<AccountDTO> GetCurrentClientAccounts()
         {

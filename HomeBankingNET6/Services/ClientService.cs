@@ -6,6 +6,9 @@ using System;
 using System.Linq;
 using static HomeBankingNET6.Services.ServiceExceptions;
 using HomeBankingNET6.Helpers;
+using System.Text.RegularExpressions;
+using System.ComponentModel.DataAnnotations;
+using HomeBankingNET6.Enums;
 
 namespace HomeBankingNET6.Services
 {
@@ -112,17 +115,49 @@ namespace HomeBankingNET6.Services
             return clientDTO;
         }
 
-        public ClientDTO CreateClient(CreateClientRequestDTO client)
+        public Result<ClientDTO> CreateClient(CreateClientRequestDTO client)
         {
             try
             {
-                //validamos datos antes
-                if (String.IsNullOrEmpty(client.Email) || String.IsNullOrEmpty(client.Password) || String.IsNullOrEmpty(client.FirstName) || String.IsNullOrEmpty(client.LastName))
-                    throw new InvalidRequest();
+                bool isNameValid = Regex.IsMatch(client.FirstName, @"^[A-Za-z]{3,}$");
+                bool isLastNameValid = Regex.IsMatch(client.LastName, @"^[A-Za-z ]{3,}$");
+                if (!isNameValid || !isLastNameValid)
+                {
+                    return Result<ClientDTO>.Failure(new ErrorResponseDTO
+                    {
+                        Status = 403, Error = "Forbidden", Message = $"Formato de nombre o apellido no válidos"
+                    });
+                }
 
-                //buscamos si ya existe el usuario
-                if (_clientRepository.FindByEmail(client.Email) != null)
-                    throw new EmailAlreadyUsed();
+                bool isPasswordValid = Regex.IsMatch(client.Password, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$");
+                if (!isPasswordValid)
+                {
+                    return Result<ClientDTO>.Failure(new ErrorResponseDTO
+                    {
+                        Status = 403,
+                        Error = "Forbidden",
+                        Message = $"Formato de contraseña no válido"
+                    });
+                }
+
+                var isEmailValid = new EmailAddressAttribute().IsValid(client.Email);
+                if (isEmailValid)
+                {
+                    return Result<ClientDTO>.Failure(new ErrorResponseDTO
+                    {
+                        Status = 403,
+                        Error = "Forbidden",
+                        Message = $"Formato de email no válido"
+                    });
+                }
+
+                ////validamos datos antes
+                //if (String.IsNullOrEmpty(client.Email) || String.IsNullOrEmpty(client.Password) || String.IsNullOrEmpty(client.FirstName) || String.IsNullOrEmpty(client.LastName))
+                //    throw new InvalidRequest();
+
+                ////buscamos si ya existe el usuario
+                //if (_clientRepository.FindByEmail(client.Email) != null)
+                //    throw new EmailAlreadyUsed();
 
                 string passwordHashed = _passwordHasher.Hash(client.Password);
                 Client newClient = new Client
@@ -148,7 +183,7 @@ namespace HomeBankingNET6.Services
                 _accountRepository.Save(newAccount);
 
                 ClientDTO createdClientDTO = GetClientById(createdClient.Id);
-                return createdClientDTO;
+                return Result<ClientDTO>.Success(createdClientDTO);
             }
             catch (Exception ex)
             {
